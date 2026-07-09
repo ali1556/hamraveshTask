@@ -1,6 +1,5 @@
 import re
 import sys
-import matplotlib.pyplot as plt
 
 
 invalid_line_count = 0
@@ -12,6 +11,7 @@ addresses_with_most_traffic = {}
 number_of_errors = 0
 error_rate = 0.0
 traffic_per_hour = {}
+log_size = 0
 
 
 log_pattern = re.compile(
@@ -38,17 +38,27 @@ def ip_handle(ip):
     unique_ip_addresses.add(ip)
 
 def top_ten_addresses():
-    sorted_addresses = sorted(addresses_with_most_traffic.items(), key=lambda x: x[1], reverse=True)
-    return sorted_addresses[:10]
+    sorted_endpoints = sorted(addresses_with_most_traffic.items(), key=lambda x: x[1], reverse=True)
+    return sorted_endpoints[:10]
 
 def calculate_error_rate():
     if total_number_of_requests > 0:
-        return (number_of_errors / total_number_of_requests) * 100
+        return (number_of_errors / valid_line_count) * 100
     return 0.0
 
 def suspicious_ip(ip):
     #placeholder
     return False
+
+def print_top_endpoints():
+    print("Top 10 Endpoints with Most Traffic:")
+    print(f"{'Rank':<6} {'Endpoint':<40} {'Requests':<10}")
+    
+    for rank, (endpoint, count) in enumerate(top_ten_addresses(), start=1):
+        endpoint_display = endpoint[:37] + "..." if len(endpoint) > 40 else endpoint
+        print(f"{rank:<6} {endpoint_display:<40} {count:<10}")
+    
+
 
 def print_hourly_traffic(traffic_per_hour):
     max_count = max(traffic_per_hour.values())
@@ -60,23 +70,16 @@ def print_hourly_traffic(traffic_per_hour):
         bar_length = int(count * scale)
         bar = '█' * bar_length
         print(f"  {hour}:00  | {bar} ({count})")
+    print(f"Peak traffic at hour {max(traffic_per_hour, key=traffic_per_hour.get)}:00")
+    print(f"Lowest traffic at hour {min(traffic_per_hour, key=traffic_per_hour.get)}:00")
 
 file_path = sys.argv[1]
 file = open(file_path, "r")
 
 for i, line in enumerate(file):
 
-    # start = 300
-    # end = 600
-
-    # if i<start:
-    #     continue
-    # if i>=end:
-    #     break
-
-    total_number_of_requests += 1
     is_valid, data, error = is_valid_log(line)
-
+    total_number_of_requests += 1
     if is_valid: 
         valid_line_count += 1
         timestamp = data['timestamp']
@@ -94,7 +97,7 @@ print (f"Requests : {total_number_of_requests}")
 print (f"Valid lines : {valid_line_count}")
 print (f"Invalid lines : {invalid_line_count}")
 print (f"Unique IP addresses : {len(unique_ip_addresses)}")
-print (f"Top 10 endpoints with most traffic : {top_ten_addresses()}")
+print_top_endpoints()
 print (f"Error rate : {calculate_error_rate():.2f}%")
 print ("Hourly traffic :")
 print_hourly_traffic(traffic_per_hour)
