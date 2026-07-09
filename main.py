@@ -1,4 +1,7 @@
 import re
+import sys
+import matplotlib.pyplot as plt
+
 
 invalid_line_count = 0
 valid_line_count = 0
@@ -47,24 +50,38 @@ def suspicious_ip(ip):
     #placeholder
     return False
 
+def print_hourly_traffic(traffic_per_hour):
+    max_count = max(traffic_per_hour.values())
+    # scale 
+    scale = 50 / max_count if max_count > 0 else 0
 
-file = open("access.log", "r")
+    for hour in sorted(traffic_per_hour.keys()):
+        count = traffic_per_hour[hour]
+        bar_length = int(count * scale)
+        bar = '█' * bar_length
+        print(f"  {hour}:00  | {bar} ({count})")
+
+file_path = sys.argv[1]
+file = open(file_path, "r")
 
 for i, line in enumerate(file):
 
-    start = 300
-    end = 600
+    # start = 300
+    # end = 600
 
-    if i<start:
-        continue
-    if i>=end:
-        break
+    # if i<start:
+    #     continue
+    # if i>=end:
+    #     break
 
     total_number_of_requests += 1
     is_valid, data, error = is_valid_log(line)
 
     if is_valid: 
         valid_line_count += 1
+        timestamp = data['timestamp']
+        hour = timestamp.split(':')[1]  
+        traffic_per_hour[hour] = traffic_per_hour.get(hour, 0) + 1
         endpoint_handle(data['path'])
         ip_handle(data['ip'])
         number_of_errors += 1 if data['status'].startswith('4') or data['status'].startswith('5') else 0
@@ -79,6 +96,9 @@ print (f"Invalid lines : {invalid_line_count}")
 print (f"Unique IP addresses : {len(unique_ip_addresses)}")
 print (f"Top 10 endpoints with most traffic : {top_ten_addresses()}")
 print (f"Error rate : {calculate_error_rate():.2f}%")
+print ("Hourly traffic :")
+print_hourly_traffic(traffic_per_hour)
+
 
 file.close()
 
