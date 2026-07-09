@@ -1,17 +1,17 @@
 import re
 
 invalid_line_count = 0
-valid_count = 0
+valid_line_count = 0
 total_number_of_requests = 0
 unique_ip_addresses = set()
 addresses_with_most_traffic = {}
-error_rate = 0
 number_of_errors = 0
+error_rate = 0.0
 traffic_per_hour = {}
 
 
 log_pattern = re.compile(
-    r'^(?P<ip>\d+\.\d+\.\d+\.\d+) - - \[(?P<timestamp>[^\]]+)\] "(?P<method>[A-Z]+) (?P<path>[^"]+) HTTP/\d\.\d" (?P<status>\d{3}) (?P<bytes>\d+) "(?P<referrer>[^"]*)" "(?P<user_agent>[^"]*)"$'
+    r'^(?P<ip>\d+\.\d+\.\d+\.\d+) - - \[(?P<timestamp>[^\]]+)\] "(?P<method>[A-Z]+) (?P<path>[^ ]+) HTTP/\d\.\d" (?P<status>\d{3}) (?P<bytes>\d+|-{1}) "(?P<referrer>[^"]*)" "(?P<user_agent>[^"]*)"\r?$'
 )
 
 def is_valid_log(line):
@@ -30,24 +30,47 @@ def endpoint_handle(endpoint):
     else:
         addresses_with_most_traffic[endpoint] = 1
 
+def ip_handle(ip):
+    unique_ip_addresses.add(ip)
+
+def top_ten_addresses():
+    sorted_addresses = sorted(addresses_with_most_traffic.items(), key=lambda x: x[1], reverse=True)
+    return sorted_addresses[:10]
+
+def calculate_error_rate():
+    if total_number_of_requests > 0:
+        return (number_of_errors / total_number_of_requests) * 100
+    return 0.0
+
+
 file = open("access.log", "r")
 
 for i, line in enumerate(file):
-    if i>=1000:
+
+    if i>=200:
         break
-    is_valid, data, error = is_valid_log(line)
+
     total_number_of_requests += 1
+    is_valid, data, error = is_valid_log(line)
+
     if is_valid: 
-        valid_count += 1
-        unique_ip_addresses.add(data['ip'])
+        valid_line_count += 1
         endpoint_handle(data['path'])
+        ip_handle(data['ip'])
         number_of_errors += 1 if data['status'].startswith('4') or data['status'].startswith('5') else 0
 
     else:
         invalid_line_count += 1
-        print(f"invalid entry number : {i}")
-        print(f"Invalid entry: {error}")
-        print(f"Line: {line.strip()}")
+        # print(f"invalid entry number : {i}")
+        # print(f"Invalid entry: {error}")
+        # print(f"Line: {line.strip()}")
+
+print (f"Requests : {total_number_of_requests}")
+print (f"Valid lines : {valid_line_count}")
+print (f"Invalid lines : {invalid_line_count}")
+print (f"Unique IP addresses : {len(unique_ip_addresses)}")
+print (f"Top 10 addresses with most traffic : {top_ten_addresses()}")
+print (f"Error rate : {calculate_error_rate():.2f}%")
 
 file.close()
 
