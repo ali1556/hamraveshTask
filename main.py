@@ -1,5 +1,8 @@
 import re
 import sys
+import time 
+import gzip
+
 
 
 invalid_line_count = 0
@@ -73,8 +76,13 @@ def print_hourly_traffic(traffic_per_hour):
     print(f"Peak traffic at hour {max(traffic_per_hour, key=traffic_per_hour.get)}:00")
     print(f"Lowest traffic at hour {min(traffic_per_hour, key=traffic_per_hour.get)}:00")
 
+start_time = time.time()
 file_path = sys.argv[1]
-file = open(file_path, "r")
+
+if file_path.endswith('.gz'):
+    file = gzip.open(file_path, 'rt')  # 'rt' = read text mode
+else:
+    file = open(file_path, 'r')
 
 for i, line in enumerate(file):
 
@@ -92,6 +100,7 @@ for i, line in enumerate(file):
     else:
         invalid_line_count += 1 
 
+elapsed_time = time.time() - start_time
 
 print (f"Requests : {total_number_of_requests}")
 print (f"Valid lines : {valid_line_count}")
@@ -105,5 +114,5 @@ print_hourly_traffic(traffic_per_hour)
 
 file.close()
 
-
+print(f"Execution time: {elapsed_time:.2f} seconds")
     
