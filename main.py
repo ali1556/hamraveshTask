@@ -4,6 +4,7 @@ invalid_line_count = 0
 valid_line_count = 0
 total_number_of_requests = 0
 unique_ip_addresses = set()
+ip_traffic_counts = {}
 addresses_with_most_traffic = {}
 number_of_errors = 0
 error_rate = 0.0
@@ -42,12 +43,21 @@ def calculate_error_rate():
         return (number_of_errors / total_number_of_requests) * 100
     return 0.0
 
+def suspicious_ip(ip):
+    #placeholder
+    return False
+
 
 file = open("access.log", "r")
 
 for i, line in enumerate(file):
 
-    if i>=200:
+    start = 300
+    end = 600
+
+    if i<start:
+        continue
+    if i>=end:
         break
 
     total_number_of_requests += 1
@@ -60,16 +70,14 @@ for i, line in enumerate(file):
         number_of_errors += 1 if data['status'].startswith('4') or data['status'].startswith('5') else 0
 
     else:
-        invalid_line_count += 1
-        # print(f"invalid entry number : {i}")
-        # print(f"Invalid entry: {error}")
-        # print(f"Line: {line.strip()}")
+        invalid_line_count += 1 
+
 
 print (f"Requests : {total_number_of_requests}")
 print (f"Valid lines : {valid_line_count}")
 print (f"Invalid lines : {invalid_line_count}")
 print (f"Unique IP addresses : {len(unique_ip_addresses)}")
-print (f"Top 10 addresses with most traffic : {top_ten_addresses()}")
+print (f"Top 10 endpoints with most traffic : {top_ten_addresses()}")
 print (f"Error rate : {calculate_error_rate():.2f}%")
 
 file.close()
