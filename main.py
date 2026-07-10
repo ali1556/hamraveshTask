@@ -97,10 +97,14 @@ def detect_suspicious_ips(threshold=0.3, min_requests=10):
 start_time = time.time()
 file_path = sys.argv[1]
 
-if args.file.endswith('.gz'):
-    file = gzip.open(args.file, 'rt')
-else:
-    file = open(args.file, 'r')
+try:
+    if args.file.endswith('.gz'):
+        file = gzip.open(args.file, 'rt')
+    else:
+        file = open(args.file, 'r', encoding='utf-8', errors='ignore')
+except (FileNotFoundError, PermissionError) as e:
+    print(f"Error: Cannot open file '{args.file}' - {e}", file=sys.stderr)
+    sys.exit(1)
 
 for line in file:
     is_valid, data, error = is_valid_log(line)
@@ -139,6 +143,10 @@ for line in file:
             ip_401_requests[ip] = ip_401_requests.get(ip, 0) + 1
 
     else:
+        if args.start and timestamp_no_tz < args.start:
+            continue
+        if args.end and timestamp_no_tz > args.end:
+            continue
         invalid_line_count += 1
 
 file.close()
