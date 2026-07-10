@@ -32,6 +32,8 @@ python main.py access.log --start "01/Jun/2026:00:00:00" --end "01/Jun/2026:02:0
 5. Output to JSON : 
 python main.py access.log --json > report.json
 
+* We could also use the HyperLogLog library for handling unique IP addresses without memory issues but it was avoided due to project simplicity.
+
 Output : 
 Total requests – Total number of lines processed (valid lines within time range + invalid lines).
 Valid lines – Lines that matched the log format and passed the time filter.
@@ -55,3 +57,4 @@ A problem I encountered during developing the project and how I fixed it :
 
 One particular problem I encountered was the logic behind computing the total number of requests received. Using the timestamp for giving outputs that lied in a specific time range, happened after the is_valid variable was evaluated because the data['timestamp'] couldn't be null. The original implementation included the total_number_of_requests variable inside the is_valid if block and the invalid lines weren't counting; Also moving the total_number_of_requests count before the if block (and the timestamp) meant that no matter the time interval all lines in the log file were being counted. The way I handled this was processing the timestamp only when is_valid was TRUE and counting the requests after that, while implementing the log output logic in another if block so that the requests outside of the time interval weren't included in the calculations.
 Another problem I had was printing the histogram for hourly traffic, which was the fact that without scaling the shapes I got were extremely large and unproportionate, which I handled by scaling the data and printing the scaled bars.
+
